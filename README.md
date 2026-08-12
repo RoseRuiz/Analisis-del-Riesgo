@@ -33,11 +33,56 @@ A lo largo del repositorio se utilizarán distintas librerías para:
 * visualización de resultados;
 * análisis y optimización de portafolios.
 
-## 📚 Organización del repositorio
+## 📚 Contenido del curso
 
-El contenido se encuentra organizado siguiendo la secuencia del curso. Cada sección incluye los fundamentos conceptuales necesarios y prácticas computacionales que permiten implementar los modelos estudiados utilizando datos financieros.
+El curso se encuentra organizado en seis módulos que abordan progresivamente los fundamentos del riesgo financiero, su modelación cuantitativa y las principales herramientas para su medición y evaluación.
 
-Los materiales están diseñados para que el repositorio pueda utilizarse tanto durante las sesiones de clase como para consulta y trabajo independiente.
+### 📘 Módulo 1. El análisis del riesgo y su regulación
+
+Introducción al concepto de riesgo, su clasificación y el marco regulatorio internacional para la gestión de riesgos financieros, con especial atención a los Acuerdos de Basilea.
+
+➡️ [Ir al Módulo 1](Modulo-1/)
+
+---
+
+### 📈 Módulo 2. El riesgo y el rendimiento de un activo
+
+Estudio del comportamiento estocástico de los precios y rendimientos de los activos financieros, así como de la relación entre riesgo y rendimiento mediante el modelo CAPM y la estimación de beta.
+
+➡️ [Ir al Módulo 2](Modulo-2/)
+
+---
+
+### 📊 Módulo 3. Modelos de varianza
+
+Análisis y estimación de la volatilidad financiera mediante diferentes metodologías, desde modelos históricos y promedios móviles hasta los modelos EWMA, ARCH y GARCH.
+
+➡️ [Ir al Módulo 3](Modulo-3/)
+
+---
+
+### 💰 Módulo 4. Valor en Riesgo: metodologías paramétricas
+
+Introducción al concepto de Valor en Riesgo (VaR) y su estimación mediante métodos paramétricos para activos individuales, portafolios, bonos y opciones.
+
+➡️ [Ir al Módulo 4](Modulo-4/)
+
+---
+
+### 🎲 Módulo 5. Valor en Riesgo: metodologías no paramétricas
+
+Estimación del Valor en Riesgo mediante técnicas de simulación histórica y simulación de Monte Carlo, incluyendo su aplicación a portafolios e instrumentos financieros.
+
+➡️ [Ir al Módulo 5](Modulo-5/)
+
+---
+
+### 🏆 Módulo 6. Medidas de desempeño ajustadas por riesgo
+
+Evaluación del desempeño de inversiones y portafolios considerando simultáneamente rendimiento y riesgo mediante los indicadores de Sharpe y Treynor.
+
+➡️ [Ir al Módulo 6](Modulo-6/)
+
 
 ## 🧭 Filosofía del curso
 
