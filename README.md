@@ -35,53 +35,18 @@ A lo largo del repositorio se utilizarán distintas librerías para:
 
 ## 📚 Contenido del curso
 
+## 📚 Contenido del curso
+
 El curso se encuentra organizado en seis módulos que abordan progresivamente los fundamentos del riesgo financiero, su modelación cuantitativa y las principales herramientas para su medición y evaluación.
 
-### 📘 Módulo 1. El análisis del riesgo y su regulación
-
-Introducción al concepto de riesgo, su clasificación y el marco regulatorio internacional para la gestión de riesgos financieros, con especial atención a los Acuerdos de Basilea.
-
-➡️ [Ir al Módulo 1](Modulo-1/)
-
----
-
-### 📈 Módulo 2. El riesgo y el rendimiento de un activo
-
-Estudio del comportamiento estocástico de los precios y rendimientos de los activos financieros, así como de la relación entre riesgo y rendimiento mediante el modelo CAPM y la estimación de beta.
-
-➡️ [Ir al Módulo 2](Modulo-2/)
-
----
-
-### 📊 Módulo 3. Modelos de varianza
-
-Análisis y estimación de la volatilidad financiera mediante diferentes metodologías, desde modelos históricos y promedios móviles hasta los modelos EWMA, ARCH y GARCH.
-
-➡️ [Ir al Módulo 3](Modulo-3/)
-
----
-
-### 💰 Módulo 4. Valor en Riesgo: metodologías paramétricas
-
-Introducción al concepto de Valor en Riesgo (VaR) y su estimación mediante métodos paramétricos para activos individuales, portafolios, bonos y opciones.
-
-➡️ [Ir al Módulo 4](Modulo-4/)
-
----
-
-### 🎲 Módulo 5. Valor en Riesgo: metodologías no paramétricas
-
-Estimación del Valor en Riesgo mediante técnicas de simulación histórica y simulación de Monte Carlo, incluyendo su aplicación a portafolios e instrumentos financieros.
-
-➡️ [Ir al Módulo 5](Modulo-5/)
-
----
-
-### 🏆 Módulo 6. Medidas de desempeño ajustadas por riesgo
-
-Evaluación del desempeño de inversiones y portafolios considerando simultáneamente rendimiento y riesgo mediante los indicadores de Sharpe y Treynor.
-
-➡️ [Ir al Módulo 6](Modulo-6/)
+| Módulo | Contenido | Descripción |
+|:---:|---|---|
+| 📘 **1** | [**El análisis del riesgo y su regulación**](Modulo-1/) | Introducción al concepto de riesgo, su clasificación y el marco regulatorio internacional, con especial atención a los Acuerdos de Basilea. |
+| 📈 **2** | [**El riesgo y el rendimiento de un activo**](Modulo-2/) | Estudio del comportamiento estocástico de precios y rendimientos, el modelo CAPM y la estimación e interpretación de beta. |
+| 📊 **3** | [**Modelos de varianza**](Modulo-3/) | Estimación y modelación de la volatilidad mediante volatilidad histórica, promedios móviles, EWMA, ARCH y GARCH. |
+| 💰 **4** | [**Valor en Riesgo: metodologías paramétricas**](Modulo-4/) | Estimación del Valor en Riesgo (VaR) mediante métodos paramétricos para activos, portafolios, bonos y opciones. |
+| 🎲 **5** | [**Valor en Riesgo: metodologías no paramétricas**](Modulo-5/) | Estimación del VaR mediante simulación histórica y simulación de Monte Carlo y su aplicación a distintos instrumentos financieros. |
+| 🏆 **6** | [**Medidas de desempeño ajustadas por riesgo**](Modulo-6/) | Evaluación del desempeño de inversiones considerando conjuntamente riesgo y rendimiento mediante los indicadores de Sharpe y Treynor. |
 
 
 ## 🧭 Filosofía del curso
