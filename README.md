@@ -35,8 +35,6 @@ A lo largo del repositorio se utilizarán distintas librerías para:
 
 ## 📚 Contenido del curso
 
-## 📚 Contenido del curso
-
 El curso se encuentra organizado en seis módulos que abordan progresivamente los fundamentos del riesgo financiero, su modelación cuantitativa y las principales herramientas para su medición y evaluación.
 
 | Módulo | Contenido | Descripción |
