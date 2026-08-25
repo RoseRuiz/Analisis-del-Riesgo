@@ -1,0 +1,7 @@
+---
+title: "Varianza 1"
+output: html_document
+---
+
+Esta es una prueba para ver como vamos con la sincronizacion 
+
