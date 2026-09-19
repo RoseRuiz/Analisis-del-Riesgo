@@ -1,0 +1,357 @@
+---
+title: "Usando el GBM"
+author: "Rose Ruiz"
+date: "2026-09-10"
+output: html_document
+---
+
+# Paquetes necesarios
+
+```{r}
+set.seed(456)
+library(quantmod)
+library(moments)
+library(tseries)
+```
+
+# Descargar datos reales
+
+```{r}
+ticker <- "GFNORTEO.MX"
+getSymbols(ticker, scr="yahoo", from="2015-01-01")
+precio <- na.omit(Ad(get(ticker)))
+```
+
+# Precio, log del precio y los rendimientos
+
+```{r}
+log_precio <- log(precio)
+simple_rend <- dailyReturn(precio, type="arithmetic")
+log_rend <- dailyReturn(precio, type="log")
+head(cbind(simple_rend, log_rend, log_precio))
+```
+
+
+```{r}
+plot(log_precio, main="Log Precio", col="blue")
+plot(precio, main="Precio", col="red")
+hist(precio, n=100, main="Histograma del precio", col="green")
+plot(log_rend, n=100, main="Rendimiento", col="purple")
+hist(log_rend, n=100, main="Histograma del Rendimiento", col="pink")
+```
+
+
+# Media y la volatilidad diaria
+
+```{r}
+r <- mean(log_rend)
+R <- mean(simple_rend)
+sigma_log <- sd(log_rend)
+mean_log <- r
+sigma_log
+mean_log
+```
+
+Pregunta, la media del rendimiento logaritmico, es casi cero. ¿Podemos decir que es estadisticamente igual a cero? 
+
+$$Ho: \mu_r=0$$
+
+$$Ha:\mu_r \neq 0$$
+
+```{r}
+t.test(as.numeric(log_rend), mu=0, alternative = "two.sided")
+```
+Como el valor del pivalue es muy alto, eso implica que la probabilida de rechazar Ho, cuando es verdadera es del 15.83%, por lo cual no la rechazo y entonces la media del rendimiento logaritmico es igual a cero (en terminos estadisticos) 
+
+# ¿Formalmente los rendimientos son normales?
+
+$$Ho: \text{Los datos SI son normales}$$
+
+$$Ha: \text{Los datos NO son normales}$$
+
+```{r}
+jarque.bera.test(log_rend)
+```
+
+Rechazamos HO, entonces los datos de manera formal no siguen un comportamiento de una distribución normal. Esto se puede ver por el sesgo y la curtosis
+
+```{r}
+kurtosis(log_rend)
+skewness(log_rend)
+```
+# ¿Qué estima mean(log_ren)?
+
+Aproximadamente estima el valor de 
+
+$$E[r_{\Delta t}]=(\mu-\frac{1}{2}\sigma^2)\Delta t$$
+
+# ¿Cómo podemos tener una medida de la volatilidad anual? 
+
+```{r}
+dias_cot <- 252
+sigma_anual <- sigma_log*sqrt(dias_cot)
+sigma_anual
+sigma_log
+```
+
+$$\sigma_{anual}=\sigma_{diaria}\sqrt{252}$$
+
+# ¿Por qué por la raíz del tiempo y no solo por el tiempo?
+
+Porque la varianza incrementa de forma más o menos proporcional al tiempo, pero la desviación estándar no. 
+
+
+# Estimar $\mu$
+
+Recordemos que del GBM, tenemos 
+
+$$E[r_{\Delta t}]=(\mu-\frac{1}{2}\sigma^2)\Delta t$$
+
+
+Entonces despejando
+
+
+$$\mu=252 r_{diario}+\frac{1}{2}\sigma^2$$
+
+
+```{r}
+mu_log_anual <-dias_cot*mean_log
+mu_log_anual
+mu_gbm_anual <- mu_log_anual+0.5*sigma_anual^2
+mu_gbm_anual
+```
+
+# ¿Por qué sumamos el $\frac{1}{2}\sigma^2$?
+
+Porque cuando obtenemos el valor esperado de la distribución en logaritmos restamos ese termino a la media y debemos por asi decirlo regresarlo.
+
+# Comparación con el rendimiento simple
+
+```{r}
+mean_simple_anual <- R*dias_cot
+mean_simple_anual
+```
+
+# ¿Deben coincidir el promedio de ambas formas de rendimiento?
+
+No, la relación entre el rendimiento simple y el rendimiento logarítmico NO es lineal. Para movimientos pequeños (intervalos cortos) suelen ser cercanos.
+
+# Proyecciones (Definir parámetros)
+
+```{r}
+So <- as.numeric(last(precio))
+mu <- mu_gbm_anual
+sigma <- sigma_anual
+So
+mu
+sigma
+```
+
+
+# Aproximar usando $dS_t$
+
+```{r}
+dt_1d <- 1/dias_cot
+mean_ds <- mu*So*dt_1d
+sd_ds <- sigma*So*sqrt(dt_1d)
+mean_ds
+sd_ds
+```
+
+# Simulacion con $dS_t$
+
+```{r}
+z <- rnorm(300000, mean = 0, sd=1)
+dSt <- mu*So*dt_1d+sigma*So*sqrt(dt_1d)*z
+```
+
+Si obtenemos la media de las simulaciones, tenemos que
+
+```{r}
+mean(dSt)
+sd(dSt)
+```
+
+# ¿Cuál sería una aproximación al valor del precio?
+
+```{r}
+precio_esp_1d <- So+mean(dSt)
+precio_esp_1d
+```
+
+# ¿Cuál sería un intervalo de confianza al 95% para este precio?
+
+```{r}
+precio_esp_1d+qnorm(.025)*sd_ds
+precio_esp_1d+qnorm(.975)*sd_ds
+```
+
+
+# Solución exacta
+
+$$S_T=So \exp[(\mu-\frac{1}{2}\sigma^2)T+\sigma\sqrt{T}Z] $$
+Para 1 día
+
+```{r}
+St_1dia <- So*exp((mu-.5*sigma^2)*dt_1d+sigma*sqrt(dt_1d)*z)
+hist(St_1dia, n=100)
+```
+
+
+Estimado del precio para un día
+
+```{r}
+mean(St_1dia)
+```
+
+Estimado para un mes
+
+```{r}
+dt_1mes <- 20/dias_cot
+St_1mes <- So*exp((mu-.5*sigma^2)*dt_1mes+sigma*sqrt(dt_1mes)*z)
+mean(St_1mes)
+```
+
+Estimado para un año
+
+```{r}
+dt_1anio <- 252/dias_cot
+St_1anio <- So*exp((mu-.5*sigma^2)*dt_1anio+sigma*sqrt(dt_1anio)*z)
+mean(St_1anio)
+hist(St_1anio, n=100)
+```
+
+# Calcular probabilidades usando el precio que hemos simulado
+
+Probabilidad de que el precio en un día supere los 200 pesos
+
+Teórica
+
+```{r}
+e_lnS <- log(So)+(mu-.5*sigma^2)*dt_1d
+ds_lnS <- sigma*sqrt(dt_1d)
+e_lnS
+ds_lnS
+zo <- (log(200)-e_lnS)/ds_lnS
+zo
+```
+
+```{r}
+1-pnorm(zo, mean=0, sd=1)
+pnorm(zo, mean=0, sd=1, lower.tail = FALSE)
+```
+
+
+Empírica
+
+```{r}
+mean(St_1dia>200)
+```
+
+Probabilidad de que el precio en un mes, disminuya
+
+Empíricamente
+```{r}
+mean(St_1mes<So)
+```
+
+
+# Efectuar simulaciones para diferentes puntos del tiempo, usando la solución exacta
+
+
+1 día, 10 días y 1 año.
+
+
+```{r}
+St_1dia 
+St_1anio
+dt_10d <- 10/dias_cot
+St_10d <- So*exp((mu-.5*sigma^2)*dt_10d+sigma*sqrt(dt_10d)*z)
+```
+
+Para cada uno de estos momentos en el tiempo, debemos obtener el valor esperado, el valor mediano, la moda un intervalo de confianza digamos al 95%. Todo esto partiendo de lo que conocemos teóricamente.
+
+Para facilitar este cálculo haremos una función
+
+```{r}
+gbm_summary <- function(So, mu, sigma, T, nc){
+  z_nc=qnorm(1-(1-nc)/2)
+  c(
+   Precio_Esperado=So*exp(mu*T),
+  Mediana=So*exp((mu-.5*sigma^2)*T),
+  Moda=So*exp((mu-.5*3*sigma^2)*T),
+  inferior=So*exp((mu-.5*sigma^2)*T-z_nc*sigma*sqrt(T)),
+  superior=So*exp((mu-.5*sigma^2)*T+z_nc*sigma*sqrt(T)) 
+  )
+}
+```
+
+
+El resumen del precio para 1 día es:
+
+```{r}
+gbm_summary(So, mu, sigma,dt_1d,.95)
+```
+
+El resumen del precio para 10 días es:
+
+```{r}
+gbm_summary(So, mu, sigma,dt_10d,.95)
+```
+
+En un año
+
+```{r}
+gbm_summary(So, mu, sigma,dt_1anio,.95)
+```
+
+Verificar los momentos teóricos del comportamiento del precio, consideremos el caso de un año. DEfinimos dos momentos el primero (el valor esperado) y el segundo momento que es la varianza
+
+```{r}
+media_teo <- So*exp(mu)
+varianza_teo <- So^2*exp(2*mu)*(exp(sigma^2)-1)
+media_emp <- mean(St_1anio)
+varianza_emp <- var(St_1anio)
+rbind(Simulado=c(Media=media_emp,
+                 Varianza=varianza_emp),
+      Teorico=c(Media=media_teo,
+                Varianza=varianza_teo))
+```
+
+¿Porque no son iguales? Porque hay un error de montecarlo (el atribuible a la simulación). 
+
+¿Cómo mejoramos la simulación? Haciendo mas simulación
+
+Cada simulación, es decir cada posible valor de S que esta en los objetos St_1d, St_1anio, etc corresponde a un posible valor del precio en ese momento. NO SE TRATA DE UNA TRAYECTORIA DE PRECIO
+
+Vamos a construir una trayectoria para un año.
+
+Usaremos ambas ideas, la aproximación con ds y la solución exacta
+
+```{r}
+z2 <- rnorm(252)
+n_dias <- 252
+dt <- 1/n_dias
+S_exacta <-numeric(n_dias+1) 
+S_apro <- numeric(n_dias+1)
+S_exacta[1] <- So
+S_apro[1] <- So
+for (i in 1:n_dias) {
+  S_exacta[i+1] <- S_exacta[i]*exp((mu-.5*sigma^2)*dt+sigma*sqrt(dt)*z2[i])
+  S_apro[i+1] <- S_apro[i]+S_apro[i]*mu*dt+sigma*S_apro[i]*sqrt(dt)*z2[i]
+}
+```
+
+
+
+```{r}
+matplot(cbind(S_apro, S_exacta), type="l", xlab="Dias de cotización", ylab="Precio", 
+        main="Sol Exacta vs Aproximación")
+```
+
+
+
+
+
+
+
