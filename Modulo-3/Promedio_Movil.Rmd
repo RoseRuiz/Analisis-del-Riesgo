@@ -1,0 +1,217 @@
+---
+title: "Promedio Movil"
+author: "Rose Ruiz"
+date: "2026-09-28"
+output: html_document
+---
+
+Promedio Movil
+
+Tres caracteristicas el promedio móvil
+
+```{r paquetes}
+library(quantmod)
+library(xts)
+library(dplyr)
+library(TTR)
+```
+
+
+Descargar datos
+
+```{r bajar_datos}
+clave <- "GFNORTEO.MX"
+getSymbols(clave, from="2000-01-01")
+precio <- Ad(get(clave))
+names(precio) <- "precio"
+```
+
+```{r rendimientos}
+rendimientos <- dailyReturn(precio, type="log")
+names(rendimientos) <-"rendimiento"
+rendimientos_cuadrado <- rendimientos^2
+```
+
+```{r grafica}
+plot(rendimientos, type="l")
+plot(rendimientos_cuadrado, type="l")
+```
+
+Construir los modelos de promedio movil
+
+
+```{r promedio_movil}
+var_5 <- SMA(rendimientos_cuadrado, n=5)
+var_10 <- SMA(rendimientos_cuadrado, n=10)
+var_20 <- SMA(rendimientos_cuadrado, n=20)
+var_40 <- SMA(rendimientos_cuadrado, n=40)
+```
+
+Visualizar lo que ya hemos estimado
+
+```{r}
+limy <- c(0, max(var_5,var_10, var_20, var_40, na.rm = TRUE))
+plot(rendimientos_cuadrado, type="l", main="Var Observada", ylab="Varianza", xlab="Tiempo", ylim = limy)
+
+par(mfrow=c(2,2))
+plot(var_5, type="l", main="M=5", ylab="Varianza", xlab="Tiempo", ylim = limy)
+plot(var_10, type="l", main="M=10", ylab="Varianza", xlab="Tiempo",ylim = limy)
+plot(var_20, type="l", main="M=20", ylab="Varianza", xlab="Tiempo", ylim = limy)
+plot(var_40, type="l", main="M=40", ylab="Varianza", xlab="Tiempo", ylim = limy)
+```
+
+Ahora debemos decidir cual de los 4 modelos se ajusta mejor al conjunto de datos que tenemos, para ello lo que haremos será dividir nuestroi conjunto de datos en dos partes: 
+
+70% de los datos para el modelo 
+30% evaluación del modelo
+
+
+```{r}
+n <- NROW(rendimientos_cuadrado)
+corte <- floor(0.70*n)
+n
+corte
+fecha_corte <- index(rendimientos_cuadrado)[corte]
+fecha_corte
+fecha_inicio_prueba <- index(rendimientos_cuadrado)[corte+1]
+fecha_inicio_prueba
+```
+```{r}
+build_ma_test_forecasts <- function(r, r2, m, cut) {
+  
+  # 1. Promedio móvil con exactamente m observaciones
+  ma_t <- SMA(r2, n = m)
+  
+  # 2. El valor calculado en t-1 se usa como forecast para t.
+  # Usamos stats::lag para evitar el conflicto con dplyr::lag().
+  forecast_all <- stats::lag(ma_t, k = 1)
+  
+  # 3. Unir rendimiento, proxy realizado y forecast
+  combined <- merge(
+    r,
+    r2,
+    forecast_all
+  )
+  
+  # merge.xts() puede conservar los nombres internos de las series,
+  # por eso forzamos nombres explícitos DESPUÉS del merge.
+  colnames(combined) <- c(
+    "Return",
+    "Realized",
+    "Forecast"
+  )
+  
+  # 4. Eliminar observaciones incompletas
+  combined <- na.omit(combined)
+  
+  # 5. Mantener únicamente el periodo de evaluación común
+  test_start <- index(r2)[cut + 1]
+  combined <- combined[paste0(test_start, "/")]
+  
+  return(combined)
+}
+```
+
+
+```{r}
+prueba_m5 <- build_ma_test_forecasts(rendimientos, rendimientos_cuadrado, 5, corte)
+prueba_m10 <- build_ma_test_forecasts(rendimientos, rendimientos_cuadrado, 10, corte)
+prueba_m20 <- build_ma_test_forecasts(rendimientos, rendimientos_cuadrado, 20, corte)
+prueba_m40 <- build_ma_test_forecasts(rendimientos, rendimientos_cuadrado, 40, corte)
+```
+
+
+Funciones de costo o pérdida para determinar el mejor valor de m
+
+```{r}
+rmse <- function(y,f){
+  sqrt(mean((y-f)^2, na.rm=TRUE))
+}
+mae <- function(y,f){
+  mean(abs(y-f), na.rm=TRUE)
+}
+qlike <- function(y,f){
+  mean(f/y-log(f/y)-1, na.rm=TRUE)
+}
+relativo <- function(y,f){
+  mean(abs(1-(y/f)), na.rm=TRUE)
+}
+```
+
+Ahora si con esto vamos a comparar las medidas de costos (errores) de cada uno de los diferentes modelos evaluados sobre m (5,10,20,40)
+
+
+```{r}
+RMSE <- data.frame(
+  "M5"=rmse(prueba_m5$Realized, prueba_m5$Forecast),
+  "M10"=rmse(prueba_m10$Realized, prueba_m10$Forecast),
+  "M20"=rmse(prueba_m20$Realized, prueba_m20$Forecast),
+  "M40"=rmse(prueba_m40$Realized, prueba_m40$Forecast))
+```
+
+```{r}
+MAE <- data.frame(
+  "M5"=mae(prueba_m5$Realized, prueba_m5$Forecast),
+  "M10"=mae(prueba_m10$Realized, prueba_m10$Forecast),
+  "M20"=mae(prueba_m20$Realized, prueba_m20$Forecast),
+  "M40"=mae(prueba_m40$Realized, prueba_m40$Forecast))
+```
+
+```{r}
+QLIKE <- data.frame(
+"M5"=qlike(prueba_m5$Realized, prueba_m5$Forecast),
+"M10"=qlike(prueba_m10$Realized, prueba_m10$Forecast),
+"M20"=qlike(prueba_m20$Realized, prueba_m20$Forecast),
+"M40"=qlike(prueba_m40$Realized, prueba_m40$Forecast)
+)
+```
+
+```{r}
+RELATIVO <- data.frame(
+"M5"=relativo(prueba_m5$Realized, prueba_m5$Forecast),
+"M10"=relativo(prueba_m10$Realized, prueba_m10$Forecast),
+"M20"=relativo(prueba_m20$Realized, prueba_m20$Forecast),
+"M40"=relativo(prueba_m40$Realized, prueba_m40$Forecast)
+)
+```
+
+Para decidir que M usar, debemos definir un criterio propio sobre que queremos penalizar en los errores. Otra forma es que decidamos usar el m que minimiza al menos dos de loa indicadores. En este caso, usaremos 10 que es argumento de m que minimiza al mismo tiempo el MAE y el RMSE
+
+```{r}
+moptima <- 10
+```
+
+Con este valor de m, lo unico que queda es efectuar la estimación de varianza para el dia siguiente: 
+
+
+```{r}
+ultimos_rendc <- tail(rendimientos_cuadrado,n=10)
+est_futura_var <- mean(ultimos_rendc)
+est_fut_vol <- sqrt(est_futura_var)
+est_fut_vol*100
+```
+
+Para que día es esta estimación, recordar que solo se cuentan dias habiles, si es fin de semana sería más 3, si no solo mas uno
+
+```{r}
+index(rendimientos_cuadrado)[n]+3
+```
+
+Una de las limitantes del promedio movil es que no podriamos construir una estimación para la varianza del día 6, hasta que tengamos la varianza del día 5. 
+
+
+Estimamos solo la varianza, porque el modelo precisamente hace eso, pero no sabemos nada de la distribución perse del rendimiento. 
+
+Con esta estimación podemos simular el rendimiento futuro usando la varianza que acabamos de estimar
+
+
+```{r}
+sim_rend_futuro <- rnorm(100000, mean=mean(rendimientos), sd=est_fut_vol)
+hist(sim_rend_futuro, n=100)
+```
+
+Con esta simulción puedo calcular la probabilidad de que el rendimiento sea mayor a cero o menor a cero
+```{r}
+mean(sim_rend_futuro>0)
+```
+
